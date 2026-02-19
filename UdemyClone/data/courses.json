@@ -1,0 +1,30 @@
+[
+  {
+    "id": "b9afc80c-e2c2-43e2-bb68-dc9940bdfd04",
+    "title": "java crash course",
+    "description": "",
+    "price": 10,
+    "category": "Programming",
+    "instructorId": "f295bad0-4cb0-433c-891e-e10e9b1ed16d",
+    "instructorName": "gopinath pandi",
+    "status": "Approved",
+    "lessons": [
+      {
+        "id": "d6019e2e-c1de-400a-bca4-dbccd7e1b163",
+        "title": "oops",
+        "content": "",
+        "duration": 15,
+        "videoUrl": "",
+        "order": 1,
+        "isFreePreview": true,
+        "createdAt": "2026-02-18T16:23:56.365Z"
+      }
+    ],
+    "materials": [],
+    "totalEnrollments": 0,
+    "averageRating": 0,
+    "totalRatings": 0,
+    "createdAt": "2026-02-18T16:23:26.935Z",
+    "updatedAt": "2026-02-18T16:27:05.829Z"
+  }
+]

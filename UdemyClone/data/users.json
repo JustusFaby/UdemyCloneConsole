@@ -1,0 +1,35 @@
+[
+  {
+    "id": "51c05aa9-b43b-4b97-b791-a560ec3a1941",
+    "email": "admin@udemy.com",
+    "passwordHash": "992b45680f4a6b363c36787d9bc370db:2ae601c512a4c081eedd0e3cfccd370b689337317c0e7e012e9845a1e63981e4a40ed436000fd88c0f633a0491aae8d3abb2b6c0a508a64c9ab3b840e4de23cd",
+    "firstName": "Platform",
+    "lastName": "Admin",
+    "role": "Admin",
+    "isBanned": false,
+    "createdAt": "2026-02-18T16:18:22.772Z",
+    "updatedAt": "2026-02-18T16:18:22.773Z"
+  },
+  {
+    "id": "505082e8-0af2-45ff-8701-832717a1b7ca",
+    "email": "justusfaby@gmail.com",
+    "passwordHash": "f1eb237a8f7d23e10df2accc40b4cb50:070366c114b30d16fdf5ad2265accf08bf9ebcd535fe3eeebe29d954c402f4a4722cc60b34cafc93845b7d66499b987f8bd99817e988e8dda212e00612de406d",
+    "firstName": "Justus",
+    "lastName": "Faby",
+    "role": "Student",
+    "isBanned": false,
+    "createdAt": "2026-02-18T16:19:23.679Z",
+    "updatedAt": "2026-02-18T16:19:23.679Z"
+  },
+  {
+    "id": "f295bad0-4cb0-433c-891e-e10e9b1ed16d",
+    "email": "gopi@gmail.com",
+    "passwordHash": "eaeae4dfd86781dbc3d89a75002cf58c:24425dcc12bfecafadb9a36b136b2447ab1dfd1ad741819188a3b38462faad9ed570a8d98b1c408f31132c7a0deaf58e9c9211e42bfa8cf976f62bb1e1c23c88",
+    "firstName": "gopinath",
+    "lastName": "pandi",
+    "role": "Instructor",
+    "isBanned": false,
+    "createdAt": "2026-02-18T16:22:39.536Z",
+    "updatedAt": "2026-02-18T16:22:39.536Z"
+  }
+]
