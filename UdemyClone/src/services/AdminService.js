@@ -5,8 +5,8 @@ class AdminService {
   /**
    * Get all users (with optional role filter).
    */
-  getUsers(roleFilter = null) {
-    let users = store.users;
+  async getUsers(roleFilter = null) {
+    let users = await store.getAllUsers();
     if (roleFilter) {
       users = users.filter(u => u.role === roleFilter);
     }
@@ -16,42 +16,48 @@ class AdminService {
   /**
    * Get platform analytics.
    */
-  getAnalytics() {
-    const totalUsers = store.users.length;
-    const students = store.users.filter(u => u.role === UserRole.STUDENT).length;
-    const instructors = store.users.filter(u => u.role === UserRole.INSTRUCTOR).length;
-    const admins = store.users.filter(u => u.role === UserRole.ADMIN).length;
-    const bannedUsers = store.users.filter(u => u.isBanned).length;
+  async getAnalytics() {
+    const users = await store.getAllUsers();
+    const courses = await store.getAllCourses();
+    const enrollments = await store.getAllEnrollments();
+    const reviews = await store.getAllReviews();
+    const certificates = await store.getAllCertificates();
 
-    const totalCourses = store.courses.length;
-    const approvedCourses = store.courses.filter(c => c.status === 'Approved').length;
-    const pendingCourses = store.courses.filter(c => c.status === 'PendingApproval').length;
-    const draftCourses = store.courses.filter(c => c.status === 'Draft').length;
+    const totalUsers = users.length;
+    const students = users.filter(u => u.role === UserRole.STUDENT).length;
+    const instructors = users.filter(u => u.role === UserRole.INSTRUCTOR).length;
+    const admins = users.filter(u => u.role === UserRole.ADMIN).length;
+    const bannedUsers = users.filter(u => u.isBanned).length;
 
-    const totalEnrollments = store.enrollments.length;
-    const completedEnrollments = store.enrollments.filter(e => e.isCompleted).length;
-    const activeEnrollments = store.enrollments.filter(e => !e.isCompleted && !e.isPaused).length;
+    const totalCourses = courses.length;
+    const approvedCourses = courses.filter(c => c.status === 'Approved').length;
+    const pendingCourses = courses.filter(c => c.status === 'PendingApproval').length;
+    const draftCourses = courses.filter(c => c.status === 'Draft').length;
 
-    const totalReviews = store.reviews.length;
-    const flaggedReviews = store.reviews.filter(r => r.isFlagged).length;
+    const totalEnrollments = enrollments.length;
+    const completedEnrollments = enrollments.filter(e => e.isCompleted).length;
+    const activeEnrollments = enrollments.filter(e => !e.isCompleted && !e.isPaused).length;
 
-    const totalCertificates = store.certificates.length;
+    const totalReviews = reviews.length;
+    const flaggedReviews = reviews.filter(r => r.isFlagged).length;
+
+    const totalCertificates = certificates.length;
 
     // Revenue calculation (sum of course prices × enrollments)
     let totalRevenue = 0;
-    store.enrollments.forEach(e => {
-      const course = store.findCourseById(e.courseId);
+    for (const e of enrollments) {
+      const course = courses.find(c => c.id === e.courseId);
       if (course) totalRevenue += course.price;
-    });
+    }
 
     // Category distribution
     const categoryStats = {};
-    store.courses.forEach(c => {
+    courses.forEach(c => {
       categoryStats[c.category] = (categoryStats[c.category] || 0) + 1;
     });
 
     // Top courses by enrollment
-    const topCourses = [...store.courses]
+    const topCourses = [...courses]
       .sort((a, b) => b.totalEnrollments - a.totalEnrollments)
       .slice(0, 5)
       .map(c => ({ title: c.title, enrollments: c.totalEnrollments, rating: c.averageRating }));
@@ -71,18 +77,18 @@ class AdminService {
   /**
    * Get all courses for admin management (any status).
    */
-  getAllCourses() {
-    return store.courses;
+  async getAllCourses() {
+    return await store.getAllCourses();
   }
 
   /**
    * Get course statistics.
    */
-  getCourseStats(courseId) {
-    const course = store.findCourseById(courseId);
+  async getCourseStats(courseId) {
+    const course = await store.findCourseById(courseId);
     if (!course) return null;
-    const enrollments = store.findEnrollmentsByCourse(courseId);
-    const reviews = store.findReviewsByCourse(courseId);
+    const enrollments = await store.findEnrollmentsByCourse(courseId);
+    const reviews = await store.findReviewsByCourse(courseId);
     return {
       ...course,
       enrollmentCount: enrollments.length,

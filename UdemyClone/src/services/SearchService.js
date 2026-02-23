@@ -11,8 +11,8 @@ class SearchService {
    * @param {number} [filters.minPrice]   - minimum price
    * @param {string} [filters.sortBy]     - 'popularity' | 'newest' | 'highest-rated' | 'price-low' | 'price-high'
    */
-  search(filters = {}) {
-    let results = store.getApprovedCourses();
+  async search(filters = {}) {
+    let results = await store.getApprovedCourses();
 
     // Keyword search (title + description)
     if (filters.query) {
@@ -73,23 +73,24 @@ class SearchService {
    * 2. Recommend top-rated courses in those categories that the student hasn't enrolled in.
    * 3. Fill remaining slots with overall top-rated courses.
    */
-  getRecommendations(studentId, limit = 5) {
-    const enrollments = store.findEnrollmentsByStudent(studentId);
+  async getRecommendations(studentId, limit = 5) {
+    const enrollments = await store.findEnrollmentsByStudent(studentId);
     const enrolledCourseIds = new Set(enrollments.map(e => e.courseId));
 
     // Find preferred categories
     const categoryCounts = {};
-    enrollments.forEach(e => {
-      const course = store.findCourseById(e.courseId);
+    for (const e of enrollments) {
+      const course = await store.findCourseById(e.courseId);
       if (course) {
         categoryCounts[course.category] = (categoryCounts[course.category] || 0) + 1;
       }
-    });
+    }
     const preferredCategories = Object.entries(categoryCounts)
       .sort((a, b) => b[1] - a[1])
       .map(([cat]) => cat);
 
-    const approved = store.getApprovedCourses().filter(c => !enrolledCourseIds.has(c.id));
+    const allApproved = await store.getApprovedCourses();
+    const approved = allApproved.filter(c => !enrolledCourseIds.has(c.id));
 
     // Priority 1: courses in preferred categories, sorted by rating
     const preferred = approved

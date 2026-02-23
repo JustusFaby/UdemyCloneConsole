@@ -43,7 +43,7 @@ async function handleLogin() {
   const email = await prompt('  Email: ');
   const password = await prompt('  Password: ');
 
-  const result = authService.login(email, password);
+  const result = await authService.login(email, password);
   console.log(`\n  ${result.message}`);
 
   if (!result.success) {
@@ -100,7 +100,7 @@ async function handleRegister() {
   const email = await prompt('  Email: ');
   const password = await prompt('  Password (min 6 chars): ');
 
-  const result = authService.register({ email, password, firstName, lastName, role });
+  const result = await authService.register({ email, password, firstName, lastName, role });
   console.log(`\n  ${result.message}`);
   await pressEnter();
 }

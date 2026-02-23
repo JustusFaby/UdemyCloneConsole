@@ -11,9 +11,9 @@ class ReviewService {
    * Submit a review for a course.
    * Anti-spam: checks enrollment, duplicate, rate limiting, and spam keywords.
    */
-  submitReview({ studentId, studentName, courseId, rating, comment }) {
+  async submitReview({ studentId, studentName, courseId, rating, comment }) {
     // Must be enrolled
-    const enrollment = store.findEnrollment(studentId, courseId);
+    const enrollment = await store.findEnrollment(studentId, courseId);
     if (!enrollment) {
       return { success: false, message: 'You must be enrolled in this course to leave a review.' };
     }
@@ -24,7 +24,7 @@ class ReviewService {
     }
 
     // No duplicate reviews
-    const existing = store.findReviewByStudentAndCourse(studentId, courseId);
+    const existing = await store.findReviewByStudentAndCourse(studentId, courseId);
     if (existing) {
       return { success: false, message: 'You have already reviewed this course.' };
     }
@@ -40,11 +40,7 @@ class ReviewService {
     }
 
     // Rate limiting: max reviews per hour
-    const recentReviews = store.reviews.filter(r => {
-      if (r.studentId !== studentId) return false;
-      const diff = Date.now() - new Date(r.createdAt).getTime();
-      return diff < 3600000; // 1 hour
-    });
+    const recentReviews = await store.getRecentReviewsByStudent(studentId);
     if (recentReviews.length >= MAX_REVIEWS_PER_HOUR) {
       return { success: false, message: 'You are submitting reviews too quickly. Please wait a while.' };
     }
@@ -57,14 +53,14 @@ class ReviewService {
     review.isVerified = true;  // verified because enrollment exists
     review.isFlagged = isSpam;
 
-    store.addReview(review);
+    await store.addReview(review);
 
     if (isSpam) {
       return { success: true, message: 'Review submitted (pending moderation due to content check).' };
     }
 
     // Recalculate course rating
-    this._recalculateCourseRating(courseId);
+    await this._recalculateCourseRating(courseId);
 
     return { success: true, message: 'Review submitted successfully!' };
   }
@@ -72,48 +68,47 @@ class ReviewService {
   /**
    * Get all non-flagged reviews for a course.
    */
-  getCourseReviews(courseId) {
-    return store.findReviewsByCourse(courseId);
+  async getCourseReviews(courseId) {
+    return await store.findReviewsByCourse(courseId);
   }
 
   /**
    * Admin: get all flagged reviews.
    */
-  getFlaggedReviews() {
-    return store.reviews.filter(r => r.isFlagged);
+  async getFlaggedReviews() {
+    return await store.getFlaggedReviews();
   }
 
   /**
    * Admin: approve a flagged review.
    */
-  approveReview(reviewId) {
-    const review = store.reviews.find(r => r.id === reviewId);
+  async approveReview(reviewId) {
+    const review = await store.findReviewById(reviewId);
     if (!review) return { success: false, message: 'Review not found.' };
     review.isFlagged = false;
-    store.saveReviews();
-    this._recalculateCourseRating(review.courseId);
+    await store.updateReview(review);
+    await this._recalculateCourseRating(review.courseId);
     return { success: true, message: 'Review approved.' };
   }
 
   /**
    * Admin: delete a review.
    */
-  deleteReview(reviewId) {
-    const review = store.reviews.find(r => r.id === reviewId);
+  async deleteReview(reviewId) {
+    const review = await store.findReviewById(reviewId);
     if (!review) return { success: false, message: 'Review not found.' };
     const courseId = review.courseId;
-    store.reviews = store.reviews.filter(r => r.id !== reviewId);
-    store.saveReviews();
-    this._recalculateCourseRating(courseId);
+    await store.removeReview(reviewId);
+    await this._recalculateCourseRating(courseId);
     return { success: true, message: 'Review deleted.' };
   }
 
   /**
    * Recalculate and update the average rating for a course.
    */
-  _recalculateCourseRating(courseId) {
-    const reviews = store.findReviewsByCourse(courseId);
-    const course = store.findCourseById(courseId);
+  async _recalculateCourseRating(courseId) {
+    const reviews = await store.findReviewsByCourse(courseId);
+    const course = await store.findCourseById(courseId);
     if (!course) return;
 
     if (reviews.length === 0) {
@@ -122,7 +117,7 @@ class ReviewService {
       const sum = reviews.reduce((s, r) => s + r.rating, 0);
       course.updateRating(+(sum / reviews.length).toFixed(2), reviews.length);
     }
-    store.saveCourses();
+    await store.updateCourse(course);
   }
 }
 

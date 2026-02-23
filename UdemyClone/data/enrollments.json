@@ -1,0 +1,17 @@
+[
+  {
+    "id": "fda57e01-55ad-4b64-b097-20b39b8dd52f",
+    "studentId": "307c4782-4486-4077-a8b3-49dda792cb56",
+    "courseId": "b9afc80c-e2c2-43e2-bb68-dc9940bdfd04",
+    "courseTitle": "java crash course",
+    "completedLessonIds": [
+      "d6019e2e-c1de-400a-bca4-dbccd7e1b163"
+    ],
+    "progressPercent": 100,
+    "isCompleted": true,
+    "isPaused": false,
+    "certificateId": "57524007-217c-4937-a33d-773609ffd6d1",
+    "enrolledAt": "2026-02-19T03:14:10.418Z",
+    "completedAt": "2026-02-19T03:14:38.558Z"
+  }
+]

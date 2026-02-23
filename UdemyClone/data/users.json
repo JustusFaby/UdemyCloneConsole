@@ -31,5 +31,16 @@
     "isBanned": false,
     "createdAt": "2026-02-18T16:22:39.536Z",
     "updatedAt": "2026-02-18T16:22:39.536Z"
+  },
+  {
+    "id": "307c4782-4486-4077-a8b3-49dda792cb56",
+    "email": "abinesh@gmail.com",
+    "passwordHash": "748ae812c8faeae416c6ef5dc975fb67:147cb9f39e6a9f77011443a6bbae8e010778f135c4c13e8541aa6b13965b93d463888a75afd4be9e1e724b69eaab82d395b29409fe78f9eead5695266cfb4524",
+    "firstName": "abinesh",
+    "lastName": "raj",
+    "role": "Student",
+    "isBanned": false,
+    "createdAt": "2026-02-19T03:13:14.341Z",
+    "updatedAt": "2026-02-19T03:13:14.342Z"
   }
 ]

@@ -6,8 +6,8 @@ class EnrollmentService {
   /**
    * Enroll a student in a course.
    */
-  enroll(studentId, courseId) {
-    const course = store.findCourseById(courseId);
+  async enroll(studentId, courseId) {
+    const course = await store.findCourseById(courseId);
     if (!course) return { success: false, message: 'Course not found.' };
     if (course.status !== 'Approved') {
       return { success: false, message: 'This course is not available for enrollment.' };
@@ -15,7 +15,7 @@ class EnrollmentService {
     if (course.instructorId === studentId) {
       return { success: false, message: 'You cannot enroll in your own course.' };
     }
-    const existing = store.findEnrollment(studentId, courseId);
+    const existing = await store.findEnrollment(studentId, courseId);
     if (existing) return { success: false, message: 'You are already enrolled in this course.' };
 
     const enrollment = new Enrollment({
@@ -23,11 +23,11 @@ class EnrollmentService {
       courseId,
       courseTitle: course.title,
     });
-    store.addEnrollment(enrollment);
+    await store.addEnrollment(enrollment);
 
     // Increment enrollment count
     course.totalEnrollments++;
-    store.saveCourses();
+    await store.updateCourse(course);
 
     return { success: true, message: `Enrolled in "${course.title}"!`, enrollment };
   }
@@ -35,11 +35,11 @@ class EnrollmentService {
   /**
    * Mark a lesson as completed.
    */
-  completeLesson(studentId, courseId, lessonId) {
-    const enrollment = store.findEnrollment(studentId, courseId);
+  async completeLesson(studentId, courseId, lessonId) {
+    const enrollment = await store.findEnrollment(studentId, courseId);
     if (!enrollment) return { success: false, message: 'You are not enrolled in this course.' };
 
-    const course = store.findCourseById(courseId);
+    const course = await store.findCourseById(courseId);
     if (!course) return { success: false, message: 'Course not found.' };
 
     const lesson = course.lessons.find(l => l.id === lessonId);
@@ -47,13 +47,13 @@ class EnrollmentService {
 
     const wasDone = enrollment.isCompleted;
     enrollment.markLessonComplete(lessonId, course.lessons.length);
-    store.saveEnrollments();
+    await store.updateEnrollment(enrollment);
 
     // Issue certificate on completion
     if (enrollment.isCompleted && !wasDone) {
-      const cert = this._issueCertificate(studentId, course);
+      const cert = await this._issueCertificate(studentId, course);
       enrollment.certificateId = cert.id;
-      store.saveEnrollments();
+      await store.updateEnrollment(enrollment);
       return { success: true, message: 'Lesson completed! You have finished the course!', certificate: cert };
     }
 
@@ -63,39 +63,39 @@ class EnrollmentService {
   /**
    * Pause enrollment.
    */
-  pauseEnrollment(studentId, courseId) {
-    const enrollment = store.findEnrollment(studentId, courseId);
+  async pauseEnrollment(studentId, courseId) {
+    const enrollment = await store.findEnrollment(studentId, courseId);
     if (!enrollment) return { success: false, message: 'Enrollment not found.' };
     enrollment.pause();
-    store.saveEnrollments();
+    await store.updateEnrollment(enrollment);
     return { success: true, message: 'Course paused. Resume anytime.' };
   }
 
   /**
    * Resume enrollment.
    */
-  resumeEnrollment(studentId, courseId) {
-    const enrollment = store.findEnrollment(studentId, courseId);
+  async resumeEnrollment(studentId, courseId) {
+    const enrollment = await store.findEnrollment(studentId, courseId);
     if (!enrollment) return { success: false, message: 'Enrollment not found.' };
     enrollment.resume();
-    store.saveEnrollments();
+    await store.updateEnrollment(enrollment);
     return { success: true, message: 'Course resumed!' };
   }
 
   /**
    * Get student's enrollments.
    */
-  getStudentEnrollments(studentId) {
-    return store.findEnrollmentsByStudent(studentId);
+  async getStudentEnrollments(studentId) {
+    return await store.findEnrollmentsByStudent(studentId);
   }
 
   /**
    * Get progress details.
    */
-  getProgress(studentId, courseId) {
-    const enrollment = store.findEnrollment(studentId, courseId);
+  async getProgress(studentId, courseId) {
+    const enrollment = await store.findEnrollment(studentId, courseId);
     if (!enrollment) return null;
-    const course = store.findCourseById(courseId);
+    const course = await store.findCourseById(courseId);
     if (!course) return null;
 
     return {
@@ -117,15 +117,15 @@ class EnrollmentService {
   /**
    * Get student certificates.
    */
-  getStudentCertificates(studentId) {
-    return store.findCertificatesByStudent(studentId);
+  async getStudentCertificates(studentId) {
+    return await store.findCertificatesByStudent(studentId);
   }
 
   /**
    * Issue a certificate.
    */
-  _issueCertificate(studentId, course) {
-    const student = store.findUserById(studentId);
+  async _issueCertificate(studentId, course) {
+    const student = await store.findUserById(studentId);
     const cert = new Certificate({
       studentId,
       studentName: student ? student.fullName : 'Unknown',
@@ -133,7 +133,7 @@ class EnrollmentService {
       courseTitle: course.title,
       instructorName: course.instructorName,
     });
-    store.addCertificate(cert);
+    await store.addCertificate(cert);
     return cert;
   }
 }

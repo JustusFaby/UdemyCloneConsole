@@ -38,7 +38,7 @@ export async function showAdminMenu(user) {
 
 async function viewAnalytics() {
   showHeader('PLATFORM ANALYTICS');
-  const stats = adminService.getAnalytics();
+  const stats = await adminService.getAnalytics();
 
   console.log('  ── Users ──');
   console.log(`    Total       : ${stats.users.total}`);
@@ -87,7 +87,7 @@ async function manageUsers() {
 
   const filterIdx = await promptChoice('Filter by role:', ['All', 'Students', 'Instructors', 'Admins']);
   const filters = [null, UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ADMIN];
-  const users = adminService.getUsers(filters[filterIdx]);
+  const users = await adminService.getUsers(filters[filterIdx]);
 
   if (users.length === 0) {
     console.log('  No users found.');
@@ -114,7 +114,7 @@ async function manageUsers() {
   switch (action) {
     case 0: {
       const idx = await promptNumber('  User # : ', 1, users.length) - 1;
-      const result = authService.toggleBan(users[idx].id);
+      const result = await authService.toggleBan(users[idx].id);
       console.log(`  ${result.message}`);
       await pressEnter();
       break;
@@ -123,7 +123,7 @@ async function manageUsers() {
       const idx = await promptNumber('  User # : ', 1, users.length) - 1;
       const roleIdx = await promptChoice('  New role:', ['Student', 'Instructor', 'Admin']);
       const roles = [UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ADMIN];
-      const result = authService.promoteUser(users[idx].id, roles[roleIdx]);
+      const result = await authService.promoteUser(users[idx].id, roles[roleIdx]);
       console.log(`  ${result.message}`);
       await pressEnter();
       break;
@@ -131,7 +131,7 @@ async function manageUsers() {
     case 2: {
       const idx = await promptNumber('  User # : ', 1, users.length) - 1;
       const newPw = await prompt('  New password (min 6 chars): ');
-      const result = authService.resetPassword(users[idx].id, newPw);
+      const result = await authService.resetPassword(users[idx].id, newPw);
       console.log(`  ${result.message}`);
       await pressEnter();
       break;
@@ -152,14 +152,14 @@ async function manageCourses() {
 
   let courses;
   if (viewIdx === 0) {
-    courses = courseService.getPendingCourses();
+    courses = await courseService.getPendingCourses();
     if (courses.length === 0) {
       console.log('  No courses pending approval.');
       await pressEnter();
       return;
     }
   } else {
-    courses = adminService.getAllCourses();
+    courses = await adminService.getAllCourses();
     if (courses.length === 0) {
       console.log('  No courses in the system.');
       await pressEnter();
@@ -187,14 +187,14 @@ async function manageCourses() {
   switch (action) {
     case 0: {
       const idx = await promptNumber('  Course # : ', 1, courses.length) - 1;
-      const result = courseService.reviewCourse(courses[idx].id, true);
+      const result = await courseService.reviewCourse(courses[idx].id, true);
       console.log(`  ${result.message}`);
       await pressEnter();
       break;
     }
     case 1: {
       const idx = await promptNumber('  Course # : ', 1, courses.length) - 1;
-      const result = courseService.reviewCourse(courses[idx].id, false);
+      const result = await courseService.reviewCourse(courses[idx].id, false);
       console.log(`  ${result.message}`);
       await pressEnter();
       break;
@@ -203,7 +203,7 @@ async function manageCourses() {
       const idx = await promptNumber('  Course # : ', 1, courses.length) - 1;
       const confirm = await promptYesNo('  Are you sure?');
       if (confirm) {
-        const result = courseService.deleteCourse(courses[idx].id, null, true);
+        const result = await courseService.deleteCourse(courses[idx].id, null, true);
         console.log(`  ${result.message}`);
       }
       await pressEnter();
@@ -211,7 +211,7 @@ async function manageCourses() {
     }
     case 3: {
       const idx = await promptNumber('  Course # : ', 1, courses.length) - 1;
-      const stats = adminService.getCourseStats(courses[idx].id);
+      const stats = await adminService.getCourseStats(courses[idx].id);
       if (!stats) {
         console.log('  Course not found.');
       } else {
@@ -243,7 +243,7 @@ async function manageCourses() {
 
 async function manageFlaggedReviews() {
   showHeader('FLAGGED REVIEWS');
-  const flagged = reviewService.getFlaggedReviews();
+  const flagged = await reviewService.getFlaggedReviews();
 
   if (flagged.length === 0) {
     console.log('  No flagged reviews.');
@@ -266,14 +266,14 @@ async function manageFlaggedReviews() {
   switch (action) {
     case 0: {
       const idx = await promptNumber('  Review # : ', 1, flagged.length) - 1;
-      const result = reviewService.approveReview(flagged[idx].id);
+      const result = await reviewService.approveReview(flagged[idx].id);
       console.log(`  ${result.message}`);
       await pressEnter();
       break;
     }
     case 1: {
       const idx = await promptNumber('  Review # : ', 1, flagged.length) - 1;
-      const result = reviewService.deleteReview(flagged[idx].id);
+      const result = await reviewService.deleteReview(flagged[idx].id);
       console.log(`  ${result.message}`);
       await pressEnter();
       break;
@@ -296,7 +296,7 @@ async function createAdmin() {
   const { User } = await import('../models/User.js');
   const store = (await import('../data/DataStore.js')).default;
 
-  if (store.findUserByEmail(email)) {
+  if (await store.findUserByEmail(email)) {
     console.log('  An account with this email already exists.');
     await pressEnter();
     return;
@@ -309,7 +309,7 @@ async function createAdmin() {
     lastName,
     role: UserRole.ADMIN,
   });
-  store.addUser(admin);
+  await store.addUser(admin);
   console.log(`\n  Admin account created for ${firstName} ${lastName}.`);
   await pressEnter();
 }

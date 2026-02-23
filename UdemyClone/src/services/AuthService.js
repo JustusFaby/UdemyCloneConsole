@@ -5,13 +5,14 @@ import { hashPassword, verifyPassword } from '../utils/PasswordHasher.js';
 class AuthService {
   constructor() {
     this.currentUser = null;
-    this._seedAdmin();
+    this._adminSeeded = false;
   }
 
   /** Seed a default admin account if none exists */
-  _seedAdmin() {
-    const adminExists = store.users.some(u => u.role === UserRole.ADMIN);
-    if (!adminExists) {
+  async _seedAdmin() {
+    if (this._adminSeeded) return;
+    const existing = await store.findUserByEmail('admin@udemy.com');
+    if (!existing) {
       const admin = new User({
         email: 'admin@udemy.com',
         passwordHash: hashPassword('Admin@123'),
@@ -19,21 +20,23 @@ class AuthService {
         lastName: 'Admin',
         role: UserRole.ADMIN,
       });
-      store.addUser(admin);
+      await store.addUser(admin);
     }
+    this._adminSeeded = true;
   }
 
   /**
    * Register a new user.
    * @returns {{ success: boolean, message: string, user?: User }}
    */
-  register({ email, password, firstName, lastName, role }) {
+  async register({ email, password, firstName, lastName, role }) {
+    await this._seedAdmin();
     // Validate email format
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { success: false, message: 'Invalid email format.' };
     }
     // Check duplicate
-    if (store.findUserByEmail(email)) {
+    if (await store.findUserByEmail(email)) {
       return { success: false, message: 'An account with this email already exists.' };
     }
     // Validate password strength
@@ -53,7 +56,7 @@ class AuthService {
       role: role || UserRole.STUDENT,
     });
 
-    store.addUser(user);
+    await store.addUser(user);
     return { success: true, message: 'Registration successful!', user };
   }
 
@@ -63,8 +66,9 @@ class AuthService {
    *   - Instructors are allowed to browse/enroll like students (dual-role).
    * @returns {{ success: boolean, message: string, user?: User }}
    */
-  login(email, password) {
-    const user = store.findUserByEmail(email);
+  async login(email, password) {
+    await this._seedAdmin();
+    const user = await store.findUserByEmail(email);
     if (!user) {
       return { success: false, message: 'No account found with that email.' };
     }
@@ -111,34 +115,34 @@ class AuthService {
   }
 
   /** Admin: promote a user to a different role */
-  promoteUser(userId, newRole) {
-    const user = store.findUserById(userId);
+  async promoteUser(userId, newRole) {
+    const user = await store.findUserById(userId);
     if (!user) return { success: false, message: 'User not found.' };
     user.role = newRole;
     user.updatedAt = new Date().toISOString();
-    store.saveUsers();
+    await store.updateUser(user);
     return { success: true, message: `${user.fullName} is now a ${newRole}.` };
   }
 
   /** Admin: ban/unban a user */
-  toggleBan(userId) {
-    const user = store.findUserById(userId);
+  async toggleBan(userId) {
+    const user = await store.findUserById(userId);
     if (!user) return { success: false, message: 'User not found.' };
     if (user.role === UserRole.ADMIN) return { success: false, message: 'Cannot ban an admin.' };
     user.isBanned = !user.isBanned;
     user.updatedAt = new Date().toISOString();
-    store.saveUsers();
+    await store.updateUser(user);
     return { success: true, message: `${user.fullName} has been ${user.isBanned ? 'banned' : 'unbanned'}.` };
   }
 
   /** Admin: reset a user's password */
-  resetPassword(userId, newPassword) {
-    const user = store.findUserById(userId);
+  async resetPassword(userId, newPassword) {
+    const user = await store.findUserById(userId);
     if (!user) return { success: false, message: 'User not found.' };
     if (newPassword.length < 6) return { success: false, message: 'Password must be at least 6 characters.' };
     user.passwordHash = hashPassword(newPassword);
     user.updatedAt = new Date().toISOString();
-    store.saveUsers();
+    await store.updateUser(user);
     return { success: true, message: `Password reset for ${user.fullName}.` };
   }
 }

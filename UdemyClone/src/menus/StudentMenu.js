@@ -69,7 +69,7 @@ async function browseCourses(user) {
   const sortOptions = ['popularity', 'newest', 'highest-rated', 'price-low', 'price-high'];
   filters.sortBy = sortOptions[sortIdx];
 
-  const results = searchService.search(filters);
+  const results = await searchService.search(filters);
 
   showHeader(`SEARCH RESULTS (${results.length} courses)`);
   if (results.length === 0) {
@@ -98,7 +98,7 @@ async function browseCourses(user) {
 // ─── Course Detail & Enrollment ───────────────────────────
 
 async function viewCourseDetail(user, course) {
-  const preview = courseService.getCoursePreview(course.id);
+  const preview = await courseService.getCoursePreview(course.id);
   if (!preview) {
     console.log('  Course not found.');
     await pressEnter();
@@ -131,7 +131,7 @@ async function viewCourseDetail(user, course) {
   });
 
   // Show reviews
-  const reviews = reviewService.getCourseReviews(course.id);
+  const reviews = await reviewService.getCourseReviews(course.id);
   if (reviews.length > 0) {
     console.log('\n  ── Student Reviews ──');
     reviews.slice(0, 5).forEach(r => {
@@ -146,7 +146,7 @@ async function viewCourseDetail(user, course) {
   ]);
 
   if (choice === 0) {
-    const result = enrollmentService.enroll(user.id, course.id);
+    const result = await enrollmentService.enroll(user.id, course.id);
     console.log(`\n  ${result.message}`);
     await pressEnter();
   }
@@ -156,7 +156,7 @@ async function viewCourseDetail(user, course) {
 
 async function viewRecommendations(user) {
   showHeader('RECOMMENDED FOR YOU');
-  const recs = searchService.getRecommendations(user.id);
+  const recs = await searchService.getRecommendations(user.id);
 
   if (recs.length === 0) {
     console.log('  No recommendations available. Browse and enroll in courses to get personalized suggestions!');
@@ -175,7 +175,7 @@ async function viewRecommendations(user) {
   const enroll = await promptYesNo('\n  Enroll in a recommended course?');
   if (enroll) {
     const idx = await promptNumber('  Enter course # : ', 1, recs.length) - 1;
-    const result = enrollmentService.enroll(user.id, recs[idx].id);
+    const result = await enrollmentService.enroll(user.id, recs[idx].id);
     console.log(`\n  ${result.message}`);
   }
   await pressEnter();
@@ -185,7 +185,7 @@ async function viewRecommendations(user) {
 
 async function viewEnrollments(user) {
   showHeader('MY ENROLLED COURSES');
-  const enrollments = enrollmentService.getStudentEnrollments(user.id);
+  const enrollments = await enrollmentService.getStudentEnrollments(user.id);
 
   if (enrollments.length === 0) {
     console.log('  You have not enrolled in any courses yet.');
@@ -230,7 +230,7 @@ async function viewEnrollments(user) {
 // ─── Continue Course (Lesson Completion) ──────────────────
 
 async function continueCourse(user, enrollment) {
-  const progress = enrollmentService.getProgress(user.id, enrollment.courseId);
+  const progress = await enrollmentService.getProgress(user.id, enrollment.courseId);
   if (!progress) {
     console.log('  Could not load course progress.');
     await pressEnter();
@@ -255,7 +255,7 @@ async function continueCourse(user, enrollment) {
     console.log('\n  Incomplete lessons:');
     incomplete.forEach((l, i) => console.log(`    [${i + 1}] ${l.order}. ${l.title}`));
     const lIdx = await promptNumber('  Select lesson # : ', 1, incomplete.length) - 1;
-    const result = enrollmentService.completeLesson(user.id, enrollment.courseId, incomplete[lIdx].id);
+    const result = await enrollmentService.completeLesson(user.id, enrollment.courseId, incomplete[lIdx].id);
     console.log(`\n  ${result.message}`);
 
     if (result.certificate) {
@@ -269,10 +269,10 @@ async function continueCourse(user, enrollment) {
 
 async function togglePause(user, enrollment) {
   if (enrollment.isPaused) {
-    const result = enrollmentService.resumeEnrollment(user.id, enrollment.courseId);
+    const result = await enrollmentService.resumeEnrollment(user.id, enrollment.courseId);
     console.log(`  ${result.message}`);
   } else {
-    const result = enrollmentService.pauseEnrollment(user.id, enrollment.courseId);
+    const result = await enrollmentService.pauseEnrollment(user.id, enrollment.courseId);
     console.log(`  ${result.message}`);
   }
   await pressEnter();
@@ -285,7 +285,7 @@ async function leaveReview(user, enrollment) {
   const rating = await promptNumber('  Rating (1-5 stars): ', 1, 5);
   const comment = await prompt('  Your review (min 10 chars): ');
 
-  const result = reviewService.submitReview({
+  const result = await reviewService.submitReview({
     studentId: user.id,
     studentName: user.firstName + ' ' + user.lastName,
     courseId: enrollment.courseId,
@@ -300,7 +300,7 @@ async function leaveReview(user, enrollment) {
 
 async function viewProgress(user) {
   showHeader('COURSE PROGRESS');
-  const enrollments = enrollmentService.getStudentEnrollments(user.id);
+  const enrollments = await enrollmentService.getStudentEnrollments(user.id);
 
   if (enrollments.length === 0) {
     console.log('  No enrollments yet.');
@@ -310,7 +310,7 @@ async function viewProgress(user) {
 
   const idx = await promptNumber(`  Select course (1-${enrollments.length}):\n${enrollments.map((e, i) => `    [${i + 1}] ${e.courseTitle}`).join('\n')}\n  Choice: `, 1, enrollments.length) - 1;
 
-  const progress = enrollmentService.getProgress(user.id, enrollments[idx].courseId);
+  const progress = await enrollmentService.getProgress(user.id, enrollments[idx].courseId);
   if (!progress) {
     console.log('  Could not load progress.');
     await pressEnter();
@@ -335,7 +335,7 @@ async function viewProgress(user) {
 
 async function viewCertificates(user) {
   showHeader('MY CERTIFICATES');
-  const certs = enrollmentService.getStudentCertificates(user.id);
+  const certs = await enrollmentService.getStudentCertificates(user.id);
 
   if (certs.length === 0) {
     console.log('  No certificates yet. Complete a course to earn one!');

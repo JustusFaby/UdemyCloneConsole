@@ -1,7 +1,6 @@
 import courseService from '../services/CourseService.js';
 import enrollmentService from '../services/EnrollmentService.js';
 import reviewService from '../services/ReviewService.js';
-import store from '../data/DataStore.js';
 import { CourseCategory } from '../models/Course.js';
 import { prompt, promptChoice, promptNumber, promptYesNo, showHeader, showTable, pressEnter } from '../utils/InputHelper.js';
 
@@ -42,7 +41,7 @@ async function createCourse(user) {
   const catIdx = await promptChoice('  Category:', categories);
   const category = categories[catIdx];
 
-  const result = courseService.createCourse({
+  const result = await courseService.createCourse({
     title,
     description,
     price,
@@ -66,7 +65,7 @@ async function createCourse(user) {
 
     const submit = await promptYesNo('  Submit for approval?');
     if (submit) {
-      const subResult = courseService.submitForApproval(result.course.id, user.id);
+      const subResult = await courseService.submitForApproval(result.course.id, user.id);
       console.log(`  ${subResult.message}`);
     }
   }
@@ -85,7 +84,7 @@ async function addLessonsLoop(courseId) {
     const videoUrl = await prompt('  Video URL (or press Enter): ');
     const isFreePreview = await promptYesNo('  Mark as free preview?');
 
-    const result = courseService.addLesson(courseId, { title, content, duration, videoUrl, isFreePreview });
+    const result = await courseService.addLesson(courseId, { title, content, duration, videoUrl, isFreePreview });
     console.log(`  ${result.message}`);
 
     adding = await promptYesNo('  Add another lesson?');
@@ -104,7 +103,7 @@ async function addMaterialsLoop(courseId) {
     const title = await prompt('  Material title: ');
     const content = await prompt('  URL or Content: ');
 
-    const result = courseService.addMaterial(courseId, { type, title, content });
+    const result = await courseService.addMaterial(courseId, { type, title, content });
     console.log(`  ${result.message}`);
 
     adding = await promptYesNo('  Add another material?');
@@ -115,7 +114,7 @@ async function addMaterialsLoop(courseId) {
 
 async function manageCourses(user) {
   showHeader('MY COURSES');
-  const courses = courseService.getInstructorCourses(user.id);
+  const courses = await courseService.getInstructorCourses(user.id);
 
   if (courses.length === 0) {
     console.log('  You have not created any courses yet.');
@@ -153,7 +152,7 @@ async function manageCourses(user) {
     case 2: await removeLessonMenu(course); break;
     case 3: await addMaterialsLoop(course.id); break;
     case 4: {
-      const r = courseService.submitForApproval(course.id, user.id);
+      const r = await courseService.submitForApproval(course.id, user.id);
       console.log(`  ${r.message}`);
       await pressEnter();
       break;
@@ -161,7 +160,7 @@ async function manageCourses(user) {
     case 5: {
       const confirm = await promptYesNo('  Are you sure you want to delete this course?');
       if (confirm) {
-        const r = courseService.deleteCourse(course.id, user.id);
+        const r = await courseService.deleteCourse(course.id, user.id);
         console.log(`  ${r.message}`);
       }
       await pressEnter();
@@ -194,7 +193,7 @@ async function editCourse(course) {
     updates.category = categories[catIdx];
   }
 
-  const result = courseService.editCourse(course.id, updates);
+  const result = await courseService.editCourse(course.id, updates);
   console.log(`\n  ${result.message}`);
   await pressEnter();
 }
@@ -211,7 +210,7 @@ async function removeLessonMenu(course) {
   course.lessons.forEach((l, i) => console.log(`    [${i + 1}] ${l.title}`));
 
   const idx = await promptNumber('  Remove lesson # : ', 1, course.lessons.length) - 1;
-  const result = courseService.removeLesson(course.id, course.lessons[idx].id);
+  const result = await courseService.removeLesson(course.id, course.lessons[idx].id);
   console.log(`  ${result.message}`);
   await pressEnter();
 }
@@ -220,7 +219,7 @@ async function removeLessonMenu(course) {
 
 async function viewReviews(course) {
   showHeader(`REVIEWS FOR: ${course.title}`);
-  const reviews = reviewService.getCourseReviews(course.id);
+  const reviews = await reviewService.getCourseReviews(course.id);
 
   if (reviews.length === 0) {
     console.log('  No reviews yet.');
@@ -242,7 +241,7 @@ async function viewReviews(course) {
 
 async function viewCourseStats(user) {
   showHeader('COURSE STATISTICS');
-  const courses = courseService.getInstructorCourses(user.id);
+  const courses = await courseService.getInstructorCourses(user.id);
 
   if (courses.length === 0) {
     console.log('  No courses found.');
