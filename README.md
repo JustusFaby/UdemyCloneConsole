@@ -2,6 +2,10 @@
 
 A console-based learning platform built with Java and Amazon RDS MySQL.
 
+## Architecture
+
+![Udemy Clone Architecture](architecture-diagram.png)
+
 ## Features
 
 - User roles: Student, Instructor, Admin
